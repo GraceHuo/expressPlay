@@ -1,54 +1,60 @@
 var express    = require( 'express' );
 var bookRouter = express.Router();
-var sql        = require( 'mssql' );
+var mongodb    = require( 'mongodb' ).MongoClient;
+var objectId   = require( 'mongodb' ).ObjectID;
 
-var router = function( nav, connection ) {
+var router     = function( nav ) {
+  bookRouter.use( function( req, res, next ) {
+    if ( !req.user ) {
+      res.redirect( '/' );
+    }
+    next();
+  } );
+
   bookRouter.route( '/' )
     .get( function( req, res ) {
-      connection.query( 'SELECT * FROM books', function( err, rows, fields ) {
-        if ( !err ) {
-          var books = JSON.parse( JSON.stringify( rows ) );
-          res.render( "bookListView", {
-            title: "Books",
-            nav  : nav,
-            books: books
-          } );
-        }
-        else {
-          console.log( 'Error while performing Query.', err );
-        }
+      var url =
+            'mongodb://localhost:27017/libraryApp';
+
+      mongodb.connect( url, function( err, db ) {
+        var collection = db.collection( 'books' );
+
+        collection.find( {} ).toArray(
+          function( err, results ) {
+            res.render( 'bookListView', {
+              title: 'Books',
+              nav  : nav,
+              books: results
+            } );
+          }
+        );
       } );
+
     } );
 
   bookRouter.route( '/:id' )
-    .all( function( req, res, next ) {
-      var id  = req.params.id;
-      var sql = 'SELECT * FROM books WHERE id = ?';
-      connection.query( sql, [id], function( err, result ) {
-        if ( !err ) {
-          if (result.length === 0) {
-            res.status(404).send('Not Found');
-          }
-          else {
-            req.book = JSON.parse( JSON.stringify( result ) )[0];
-            next();
-          }
-        }
-        else {
-          console.log( 'Error while performing Query.', err );
-        }
-      } )
-    } )
     .get( function( req, res ) {
-      res.render( "bookView", {
-        title: "Book",
-        nav  : nav,
-        book : req.book
+      var id  = new objectId( req.params.id );
+      var url =
+            'mongodb://localhost:27017/libraryApp';
+
+      mongodb.connect( url, function( err, db ) {
+        var collection = db.collection( 'books' );
+
+        collection.findOne( { _id: id },
+          function( err, results ) {
+            res.render( 'bookView', {
+              title: 'Books',
+              nav  : nav,
+              book : results
+            } );
+
+          }
+        );
+
       } );
     } );
 
-return bookRouter;
+  return bookRouter;
 };
-
-
 module.exports = router;
