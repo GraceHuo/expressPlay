@@ -16,11 +16,13 @@
     "express": "4.13.3",
     "express-handlebars": "^2.0.1",
     "express-session": "^1.15.6",
+    "http": "0.0.0",
     "jade": "^1.11.0",
     "mongodb": "^2.2.35",
     "mssql": "^4.1.0",
     "mysql": "^2.15.0",
-    "passport": "^0.4.0"
+    "passport": "^0.4.0",
+    "xml2js": "^0.4.19"
   },
   "devDependencies": {
     "gulp": "^3.9.1",
